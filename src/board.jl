@@ -97,6 +97,7 @@ mutable struct Board
     pin::SquareSet
     key::UInt64
     is960::Bool
+    isDark::Bool
 end
 
 
@@ -162,6 +163,7 @@ function emptyboard()::Board
         SS_EMPTY,
         0,
         false,
+        false
     )
 end
 
@@ -175,6 +177,13 @@ function is960(b::Board)::Bool
     b.is960
 end
 
+"""
+    isDark(b::Board)
+Tests whether a board is a Dark Chess board.
+"""
+function isDark(b::Board)::Bool
+    b.isDark
+end
 
 """
     pieceon(b::Board, s::Square)
@@ -1129,7 +1138,15 @@ function ischeck(b::Board)::Bool
     !isempty(b.checkers)
 end
 
+"""
+    visiblesquares(list::MoveList)
 
+Reutrns the SquareSet of locations pieces can move to for pieces.
+"""
+function visiblesquares(b::Board, list::MoveList)::SquareSet
+    us = sidetomove(b)
+    return SquareSet(map(move -> to(move), list)...) ∪ pieces(b, us)
+end
 """
     pinned(b::Board)
 
@@ -2644,7 +2661,7 @@ function genkingmoves(b::Board, target::SquareSet, list::MoveList)
     them = coloropp(us)
     s1 = kingsquare(b, us)
     for s2 ∈ kingattacks(s1) ∩ target
-        if !isattacked(b, s2, them)
+        if isDark(b) || !isattacked(b, s2, them)
             push!(list, Move(s1, s2))
         end
     end
@@ -2657,7 +2674,7 @@ function countkingmoves(b::Board, target::SquareSet)::Int
     them = coloropp(us)
     s1 = kingsquare(b, us)
     for s2 ∈ kingattacks(s1) ∩ target
-        if !isattacked(b, s2, them)
+        if isDark(b) || !isattacked(b, s2, them)
             result += 1
         end
     end
@@ -2670,7 +2687,7 @@ function haskingmoves(b::Board, target::SquareSet)::Bool
     them = coloropp(us)
     s1 = kingsquare(b, us)
     for s2 ∈ kingattacks(s1) ∩ target
-        if !isattacked(b, s2, them)
+        if isDark(b) || !isattacked(b, s2, them)
             return true
         end
     end
@@ -2740,7 +2757,7 @@ function castleislegal(b, kf, kt, rf, rt)::Bool
         false
     else
         for s ∈ squaresbetween(kf, kt) + kt
-            if isattacked(b, s, them)
+            if !isDark(b) || isattacked(b, s, them)
                 return false
             end
         end
