@@ -1139,15 +1139,6 @@ function ischeck(b::Board)::Bool
 end
 
 """
-    visiblesquares(list::MoveList)
-
-Reutrns the SquareSet of locations pieces can move to for pieces.
-"""
-function visiblesquares(b::Board, list::MoveList)::SquareSet
-    us = sidetomove(b)
-    return SquareSet(map(move -> to(move), list)...) ∪ pieces(b, us)
-end
-"""
     pinned(b::Board)
 
 The set of squares containing pinned pieces for the current side to move.
@@ -3014,6 +3005,17 @@ function hasevasions(b::Board)::Bool
     false
 end
 
+"""
+    visiblesquares(list::MoveList)
+
+Reutrns the SquareSet of locations pieces can move to for pieces.
+"""
+function visiblesquares(b::Board, list::MoveList)::SquareSet
+    us = sidetomove(b)
+    return SquareSet(map(move -> to(move), list)...) ∪ pieces(b, us)
+end
+
+
 
 """
     moves(b::Board, list::MoveList)
@@ -3025,7 +3027,7 @@ When performance is important, consider using the two-argument method that
 supplies a pre-allocated move list.
 """
 function moves(b::Board, list::MoveList)::MoveList
-    if ischeck(b)
+    if ischeck(b) && !isDark(b)
         genevasions(b, list)
     else
         genmoves(b, list)
@@ -3043,7 +3045,7 @@ end
 The number of legal moves from this board.
 """
 function movecount(b::Board)::Int
-    ischeck(b) ? countevasions(b) : countmoves(b)
+    ischeck(b) && !isDark(b) ? countevasions(b) : countmoves(b)
 end
 
 
@@ -3077,7 +3079,7 @@ end
 Returns `true` if the side to move is checkmated.
 """
 function ischeckmate(b::Board)::Bool
-    ischeck(b) && !haslegalmoves(b)
+    isempty(kings(b, sidetomove(b))) || ischeck(b) && !haslegalmoves(b)
 end
 
 
